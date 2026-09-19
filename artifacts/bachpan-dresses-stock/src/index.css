@@ -1,0 +1,150 @@
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=DM+Sans:wght@400;500;600;700&display=swap');
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-card-border: hsl(var(--card-border));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --font-sans: var(--app-font-sans);
+  --font-serif: var(--app-font-serif);
+  --font-mono: var(--app-font-mono);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --background: 42 38% 96%;
+  --foreground: 221 48% 18%;
+  --border: 39 25% 84%;
+  --input: 39 25% 80%;
+  --ring: 215 78% 42%;
+  --card: 42 40% 99%;
+  --card-foreground: 221 48% 18%;
+  --card-border: 39 28% 87%;
+  --primary: 215 78% 38%;
+  --primary-foreground: 42 40% 98%;
+  --secondary: 43 94% 58%;
+  --secondary-foreground: 221 48% 15%;
+  --muted: 40 29% 91%;
+  --muted-foreground: 219 18% 45%;
+  --accent: 5 74% 52%;
+  --accent-foreground: 42 40% 98%;
+  --destructive: 4 73% 48%;
+  --destructive-foreground: 42 40% 98%;
+  --app-font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  --app-font-serif: 'Bricolage Grotesque', Georgia, serif;
+  --app-font-mono: 'DM Sans', ui-monospace, monospace;
+  --radius: 0.8rem;
+  --shadow-soft: 0 12px 32px rgba(48, 58, 77, 0.08);
+  --shadow-card: 0 2px 0 rgba(28, 47, 78, 0.04), 0 10px 24px rgba(48, 58, 77, 0.06);
+}
+
+* { box-sizing: border-box; }
+html { min-width: 320px; background: hsl(var(--background)); }
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100dvh;
+  background:
+    linear-gradient(rgba(55, 86, 120, 0.035) 1px, transparent 1px),
+    hsl(var(--background));
+  background-size: 100% 28px;
+  color: hsl(var(--foreground));
+  font-family: var(--app-font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .56; }
+::selection { background: hsl(var(--secondary)); color: hsl(var(--foreground)); }
+
+.app-shell { min-height: 100dvh; }
+.brand-display { font-family: var(--app-font-serif); letter-spacing: -0.035em; }
+.form-input {
+  width: 100%;
+  border: 1px solid hsl(39 25% 80%);
+  border-radius: .65rem;
+  background: hsl(42 40% 99%);
+  padding: .72rem .8rem;
+  color: hsl(221 48% 18%);
+  font-size: .875rem;
+  outline: none;
+  transition: border-color .18s ease, box-shadow .18s ease;
+}
+.form-input:focus { border-color: hsl(215 78% 42%); box-shadow: 0 0 0 3px hsl(215 78% 42% / .14); }
+.paper-card {
+  border: 1px solid hsl(var(--card-border));
+  background: hsl(var(--card));
+  box-shadow: var(--shadow-card);
+  border-radius: 1rem;
+}
+.ink-button { transition: transform .18s ease, box-shadow .18s ease, background-color .18s ease; }
+.ink-button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 5px 0 rgba(26, 44, 70, .16); }
+.ink-button:active:not(:disabled) { transform: translateY(1px); box-shadow: none; }
+.fade-up { animation: fade-up .42s ease both; }
+.fade-up-delay { animation: fade-up .42s .08s ease both; }
+.fade-up-delay-2 { animation: fade-up .42s .16s ease both; }
+.modal-in { animation: modal-in .22s ease both; }
+@keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes modal-in { from { opacity: 0; transform: translateY(10px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+.ledger-table { border-collapse: separate; border-spacing: 0; width: 100%; }
+.ledger-table th, .ledger-table td { border-bottom: 1px solid hsl(var(--border)); }
+.ledger-table th { background: hsl(43 55% 94%); color: hsl(var(--muted-foreground)); }
+.ledger-table tr:last-child td { border-bottom: 0; }
+.ledger-table td:not(:last-child), .ledger-table th:not(:last-child) { border-right: 1px solid hsl(var(--border)); }
+.ledger-table input { min-width: 4rem; }
+.size-pill { background: hsl(215 78% 95%); color: hsl(215 78% 32%); border: 1px solid hsl(215 58% 85%); }
+.ruled-note {
+  background: linear-gradient(transparent 23px, hsl(215 45% 88%) 24px);
+  background-size: 100% 24px;
+}
+.status-dot { width: 8px; height: 8px; border-radius: 50%; background: #2e9c68; box-shadow: 0 0 0 3px rgba(46,156,104,.14); }
+.scroll-thin::-webkit-scrollbar { width: 7px; height: 7px; }
+.scroll-thin::-webkit-scrollbar-thumb { background: hsl(39 25% 78%); border-radius: 20px; }
+
+@media (max-width: 767px) {
+  .mobile-scroll { overflow-x: auto; }
+  .ledger-table { min-width: 680px; }
+}
+
+@media print {
+  @page { size: A4 portrait; margin: 14mm; }
+  body { background: white !important; }
+  body * { visibility: hidden; }
+  .print-sheet, .print-sheet * { visibility: visible; }
+  .print-sheet {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    padding: 0;
+    color: #162b4e;
+    background: white;
+    box-shadow: none;
+  }
+  .no-print { display: none !important; }
+  .print-table { border-collapse: collapse; width: 100%; margin-top: 18px; }
+  .print-table th, .print-table td { border: 1px solid #8995a5; padding: 7px 8px; font-size: 10.5pt; text-align: center; }
+  .print-table th { background: #eff3f7 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .print-table th:first-child, .print-table td:first-child { text-align: left; }
+}

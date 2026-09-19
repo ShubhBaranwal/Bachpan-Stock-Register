@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Bachpan Dresses Stock Register"
+description = "An offline-first stock and item register for Bachpan Dresses school uniform shop owners. Manage items with custom sizes, record challan-wise stock entries, calculate totals, print A4 item registers, and backup or restore data locally."
+version = "1.0.0"
+id = "artifacts/bachpan-dresses-stock"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20550
+
+[services.development]
+run = "pnpm --filter @workspace/bachpan-dresses-stock run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/bachpan-dresses-stock", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/bachpan-dresses-stock/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20550"
+BASE_PATH = "/"
