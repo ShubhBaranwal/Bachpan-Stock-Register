@@ -232,6 +232,132 @@ function ItemPage() {
   </div>{toast && <Toast {...toast} onClose={clear} />}</Shell>;
 }
 
+function escapePrintHtml(value: string) {
+  return value.replace(/[&<>"']/g, (character) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;',
+  })[character] ?? character);
+}
+
+function buildPrintDocument(item: Item, entries: StockEntry[]) {
+  const orientation = item.sizes.length > 8 ? 'landscape' : 'portrait';
+  const sizeTotals = item.sizes.reduce<Record<string, number>>((result, size) => {
+    result[size] = entries.reduce((sum, entry) => sum + (Number(entry.quantities[size]) || 0), 0);
+    return result;
+  }, {});
+  const totalPieces = entries.reduce((sum, entry) => sum + totalForEntry(entry), 0);
+  const sizeHeaders = item.sizes.map((size) => `<th class="size">${escapePrintHtml(size)}</th>`).join('');
+  const entryRows = entries.length === 0
+    ? `<tr><td class="empty" colspan="${item.sizes.length + 3}">No stock entries recorded.</td></tr>`
+    : entries.map((entry) => `<tr>
+        <td class="date">${escapePrintHtml(formatDate(entry.date))}</td>
+        <td class="challan">${escapePrintHtml(entry.challanNumber)}</td>
+        ${item.sizes.map((size) => `<td>${entry.quantities[size] || 0}</td>`).join('')}
+        <td class="total">${totalForEntry(entry)}</td>
+      </tr>`).join('');
+  const totalCells = item.sizes.map((size) => `<th>${sizeTotals[size]}</th>`).join('');
+
+  return `<!doctype html>
+  <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>${escapePrintHtml(item.name)} - Bachpan Dresses Stock Register</title>
+      <style>
+        @page { size: A4 ${orientation}; margin: 12mm; }
+        * { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; background: #fff; color: #172e50; font-family: Arial, Helvetica, sans-serif; }
+        body { font-size: 9pt; }
+        .page { width: 100%; }
+        .brand { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #173c70; padding-bottom: 9px; }
+        .brand-name { color: #173c70; font-size: 18pt; font-weight: 800; letter-spacing: -0.3px; }
+        .brand-subtitle { margin-top: 2px; color: #ef3e32; font-size: 7pt; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+        .print-date { color: #63718a; font-size: 8pt; line-height: 1.45; text-align: right; }
+        .title { margin: 14px 0 10px; color: #173c70; font-size: 17pt; font-weight: 800; text-align: center; }
+        .details { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; border-top: 1px solid #9ba7b7; border-bottom: 1px solid #9ba7b7; padding: 8px 0; }
+        .detail-label { color: #6c7a8d; font-size: 7.5pt; }
+        .detail-value { margin-top: 2px; color: #173c70; font-size: 10pt; font-weight: 700; }
+        table { width: 100%; margin-top: 13px; border-collapse: collapse; table-layout: fixed; page-break-inside: auto; }
+        thead { display: table-header-group; }
+        tfoot { display: table-row-group; }
+        tr { page-break-inside: avoid; break-inside: avoid; }
+        th, td { border: 1px solid #718095; padding: 4px 2px; color: #172e50; font-size: 7.3pt; line-height: 1.2; text-align: center; vertical-align: middle; overflow-wrap: anywhere; }
+        th { background: #e9eff6; font-weight: 700; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        thead th:first-child, tbody td:first-child, tfoot th:first-child { width: 15%; text-align: left; }
+        thead th:nth-child(2), tbody td:nth-child(2), tfoot th:nth-child(2) { width: 14%; }
+        thead th:last-child, tbody td:last-child, tfoot th:last-child { width: 7%; }
+        .size { width: auto; }
+        tbody td.date { text-align: left; white-space: nowrap; }
+        tbody td.challan { text-align: left; }
+        tbody td.total, tfoot th:last-child { font-weight: 700; }
+        tfoot th { background: #dfe9f4; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .empty { height: 32px; color: #63718a; font-style: italic; }
+        .summary { margin-top: 10px; color: #173c70; font-size: 8.5pt; font-weight: 700; text-align: right; }
+        .footer { margin-top: 18px; color: #788397; font-size: 7pt; text-align: center; }
+        @media print {
+          .footer { position: fixed; bottom: 0; left: 0; right: 0; }
+        }
+      </style>
+    </head>
+    <body>
+      <main class="page">
+        <header class="brand">
+          <div>
+            <div class="brand-name">Bachpan Dresses</div>
+            <div class="brand-subtitle">Stock Register</div>
+          </div>
+          <div class="print-date">Printed on<br /><strong>${escapePrintHtml(formatDate(new Date().toISOString().slice(0, 10)))}</strong></div>
+        </header>
+        <h1 class="title">Stock / Item List</h1>
+        <section class="details">
+          <div><div class="detail-label">Item Name</div><div class="detail-value">${escapePrintHtml(item.name)}</div></div>
+          <div><div class="detail-label">Category</div><div class="detail-value">${escapePrintHtml(item.category)}</div></div>
+        </section>
+        <table>
+          <thead><tr><th>Date</th><th>Challan<br />Number</th>${sizeHeaders}<th>Total</th></tr></thead>
+          <tbody>${entryRows}</tbody>
+          <tfoot><tr><th>Total</th><th>—</th>${totalCells}<th>${totalPieces}</th></tr></tfoot>
+        </table>
+        <div class="summary">Total pieces: ${totalPieces}</div>
+        <div class="footer">Bachpan Dresses · Stock / Item List</div>
+      </main>
+    </body>
+  </html>`;
+}
+
+function printRegister(item: Item, entries: StockEntry[]) {
+  const documentHtml = buildPrintDocument(item, entries);
+  const printWindow = window.open('', '_blank', 'width=1200,height=900');
+
+  if (printWindow) {
+    printWindow.document.open();
+    printWindow.document.write(documentHtml);
+    printWindow.document.close();
+    printWindow.addEventListener('load', () => {
+      window.setTimeout(() => {
+        printWindow.focus();
+        printWindow.print();
+        printWindow.close();
+      }, 250);
+    }, { once: true });
+    return;
+  }
+
+  const printFrame = document.createElement('iframe');
+  printFrame.setAttribute('title', 'Bachpan Dresses print document');
+  printFrame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;';
+  printFrame.srcdoc = documentHtml;
+  document.body.appendChild(printFrame);
+  printFrame.onload = () => {
+    printFrame.contentWindow?.focus();
+    printFrame.contentWindow?.print();
+    window.setTimeout(() => printFrame.remove(), 1000);
+  };
+}
+
 function PrintPreview({ item, entries, onClose }: { item: Item; entries: StockEntry[]; onClose: () => void }) {
   const sizeTotals = item.sizes.reduce<Record<string, number>>((result, size) => {
     result[size] = entries.reduce((sum, entry) => sum + (Number(entry.quantities[size]) || 0), 0);
@@ -239,9 +365,9 @@ function PrintPreview({ item, entries, onClose }: { item: Item; entries: StockEn
   }, {});
   const totalPieces = entries.reduce((sum, entry) => sum + totalForEntry(entry), 0);
 
-  return <Modal title="Print preview" description="A4 portrait · only the clean stock list will print." onClose={onClose} wide>
+  return <Modal title="Print preview" description="Clean A4 print · wide size lists use landscape automatically." onClose={onClose} wide>
     <div className="mt-5 rounded-xl border border-[#dcd4c4] bg-[#e8e2d7] p-3 sm:p-6">
-      <div className="print-sheet mx-auto bg-white p-5 shadow-md sm:p-8">
+      <div className={`print-sheet mx-auto bg-white p-5 shadow-md sm:p-8 ${item.sizes.length > 8 ? 'print-sheet-wide' : ''}`}>
         <div className="print-heading flex items-start justify-between border-b-2 border-[#173c70] pb-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#ef3e32] text-white"><Shirt size={20} /></div>
@@ -289,7 +415,7 @@ function PrintPreview({ item, entries, onClose }: { item: Item; entries: StockEn
     </div>
     <div className="no-print mt-5 flex justify-end gap-2">
       <button onClick={onClose} className="rounded-lg px-4 py-2.5 text-sm font-bold text-[#68758a] hover:bg-[#f0e8d8]">Close</button>
-      <button onClick={() => window.print()} className="ink-button inline-flex items-center gap-2 rounded-lg bg-[#173c70] px-5 py-2.5 text-sm font-bold text-white shadow-[3px_3px_0_#f3bd2c]" data-testid="button-print"><Printer size={16} /> Print list</button>
+      <button onClick={() => printRegister(item, entries)} className="ink-button inline-flex items-center gap-2 rounded-lg bg-[#173c70] px-5 py-2.5 text-sm font-bold text-white shadow-[3px_3px_0_#f3bd2c]" data-testid="button-print"><Printer size={16} /> Print list</button>
     </div>
   </Modal>;
 }

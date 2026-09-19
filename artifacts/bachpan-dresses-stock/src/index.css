@@ -142,6 +142,7 @@ button:disabled { cursor: not-allowed; opacity: .56; }
     background: white;
     box-shadow: none;
   }
+  .print-sheet-wide { min-width: 0; }
   .no-print { display: none !important; }
   .print-heading { break-inside: avoid; }
   .print-item-meta { break-inside: avoid; }
