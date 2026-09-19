@@ -233,7 +233,65 @@ function ItemPage() {
 }
 
 function PrintPreview({ item, entries, onClose }: { item: Item; entries: StockEntry[]; onClose: () => void }) {
-  return <Modal title="Print preview" description="A4 portrait · only the clean stock list will print." onClose={onClose} wide><div className="mt-5 rounded-xl border border-[#dcd4c4] bg-[#e8e2d7] p-3 sm:p-6"><div className="print-sheet mx-auto bg-white p-5 shadow-md sm:p-8"><div className="flex items-start justify-between border-b-2 border-[#173c70] pb-4"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#ef3e32] text-white"><Shirt size={20} /></div><div><div className="brand-display text-xl font-bold text-[#173c70]">Bachpan Dresses</div><div className="text-[9px] font-bold uppercase tracking-[.2em] text-[#ef3e32]">Stock register</div></div></div><div className="text-right text-[10px] text-[#68758a]">Printed on<br /><strong>{formatDate(new Date().toISOString().slice(0, 10))}</strong></div></div><h2 className="brand-display mt-5 text-center text-2xl font-bold text-[#173c70]">Stock / Item List</h2><div className="mt-4 grid grid-cols-2 gap-4 border-y border-[#bcc5d0] py-3 text-xs"><div><span className="text-[#788397]">Item Name</span><div className="mt-1 font-bold text-[#173c70]">{item.name}</div></div><div><span className="text-[#788397]">Category</span><div className="mt-1 font-bold text-[#173c70]">{item.category}</div></div></div><table className="print-table"><thead><tr><th>Date</th><th>Challan Number</th>{item.sizes.map((size) => <th key={size}>{size}</th>)}<th>Total</th></tr></thead><tbody>{entries.map((entry) => <tr key={entry.id}><td>{formatDate(entry.date)}</td><td>{entry.challanNumber}</td>{item.sizes.map((size) => <td key={size}>{entry.quantities[size] || 0}</td>)}<td><strong>{totalForEntry(entry)}</strong></td></tr>)}{entries.length === 0 && <tr><td colSpan={item.sizes.length + 3}>No stock entries recorded.</td></tr>}</tbody></table><div className="mt-4 text-right text-xs font-bold text-[#173c70]">Total pieces: {entries.reduce((sum, entry) => sum + totalForEntry(entry), 0)}</div></div></div><div className="no-print mt-5 flex justify-end gap-2"><button onClick={onClose} className="rounded-lg px-4 py-2.5 text-sm font-bold text-[#68758a] hover:bg-[#f0e8d8]" data-testid="button-close-print-preview">Close</button><button onClick={() => window.print()} className="ink-button inline-flex items-center gap-2 rounded-lg bg-[#173c70] px-5 py-2.5 text-sm font-bold text-white shadow-[3px_3px_0_#f3bd2c]" data-testid="button-print"> <Printer size={16} /> Print list</button></div></Modal>;
+  const sizeTotals = item.sizes.reduce<Record<string, number>>((result, size) => {
+    result[size] = entries.reduce((sum, entry) => sum + (Number(entry.quantities[size]) || 0), 0);
+    return result;
+  }, {});
+  const totalPieces = entries.reduce((sum, entry) => sum + totalForEntry(entry), 0);
+
+  return <Modal title="Print preview" description="A4 portrait · only the clean stock list will print." onClose={onClose} wide>
+    <div className="mt-5 rounded-xl border border-[#dcd4c4] bg-[#e8e2d7] p-3 sm:p-6">
+      <div className="print-sheet mx-auto bg-white p-5 shadow-md sm:p-8">
+        <div className="print-heading flex items-start justify-between border-b-2 border-[#173c70] pb-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#ef3e32] text-white"><Shirt size={20} /></div>
+            <div>
+              <div className="brand-display text-xl font-bold text-[#173c70]">Bachpan Dresses</div>
+              <div className="text-[9px] font-bold uppercase tracking-[.2em] text-[#ef3e32]">Stock register</div>
+            </div>
+          </div>
+          <div className="text-right text-[10px] text-[#68758a]">Printed on<br /><strong>{formatDate(new Date().toISOString().slice(0, 10))}</strong></div>
+        </div>
+        <h2 className="brand-display mt-5 text-center text-2xl font-bold text-[#173c70]">Stock / Item List</h2>
+        <div className="print-item-meta mt-4 grid grid-cols-2 gap-4 border-y border-[#bcc5d0] py-3 text-xs">
+          <div><span className="text-[#788397]">Item Name</span><div className="mt-1 font-bold text-[#173c70]">{item.name}</div></div>
+          <div><span className="text-[#788397]">Category</span><div className="mt-1 font-bold text-[#173c70]">{item.category}</div></div>
+        </div>
+        <table className="print-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Challan<br />Number</th>
+              {item.sizes.map((size) => <th key={size}>{size}</th>)}
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {entries.map((entry) => <tr key={entry.id}>
+              <td>{formatDate(entry.date)}</td>
+              <td>{entry.challanNumber}</td>
+              {item.sizes.map((size) => <td key={size}>{entry.quantities[size] || 0}</td>)}
+              <td><strong>{totalForEntry(entry)}</strong></td>
+            </tr>)}
+            {entries.length === 0 && <tr><td colSpan={item.sizes.length + 3}>No stock entries recorded.</td></tr>}
+          </tbody>
+          <tfoot>
+            <tr>
+              <th>Total</th>
+              <th>—</th>
+              {item.sizes.map((size) => <th key={size}>{sizeTotals[size]}</th>)}
+              <th>{totalPieces}</th>
+            </tr>
+          </tfoot>
+        </table>
+        <div className="print-total mt-4 text-right text-xs font-bold text-[#173c70]">Total pieces: {totalPieces}</div>
+      </div>
+    </div>
+    <div className="no-print mt-5 flex justify-end gap-2">
+      <button onClick={onClose} className="rounded-lg px-4 py-2.5 text-sm font-bold text-[#68758a] hover:bg-[#f0e8d8]">Close</button>
+      <button onClick={() => window.print()} className="ink-button inline-flex items-center gap-2 rounded-lg bg-[#173c70] px-5 py-2.5 text-sm font-bold text-white shadow-[3px_3px_0_#f3bd2c]" data-testid="button-print"><Printer size={16} /> Print list</button>
+    </div>
+  </Modal>;
 }
 
 function AddItemPage() {
