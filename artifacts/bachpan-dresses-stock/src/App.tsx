@@ -8,6 +8,7 @@ import { deleteEntry, deleteItem, exportData, getEntries, getItem, getItems, mak
 
 const queryClient = new QueryClient();
 const categories = ['Uniform Set', 'Shirts', 'Bottoms', 'Sportswear', 'Accessories', 'Other'];
+const PRINT_BLANK_ROWS = 13;
 
 function formatDate(value: string) {
   if (!value) return '—';
@@ -251,13 +252,16 @@ function buildPrintDocument(item: Item, entries: StockEntry[]) {
   const totalPieces = entries.reduce((sum, entry) => sum + totalForEntry(entry), 0);
   const sizeHeaders = item.sizes.map((size) => `<th class="size">${escapePrintHtml(size)}</th>`).join('');
   const entryRows = entries.length === 0
-    ? `<tr><td class="empty" colspan="${item.sizes.length + 3}">No stock entries recorded.</td></tr>`
+    ? ''
     : entries.map((entry) => `<tr>
         <td class="date">${escapePrintHtml(formatDate(entry.date))}</td>
         <td class="challan">${escapePrintHtml(entry.challanNumber)}</td>
         ${item.sizes.map((size) => `<td>${entry.quantities[size] || 0}</td>`).join('')}
         <td class="total">${totalForEntry(entry)}</td>
       </tr>`).join('');
+  const blankRows = Array.from({ length: PRINT_BLANK_ROWS }, () => `<tr class="blank-row">
+    <td>&nbsp;</td><td>&nbsp;</td>${item.sizes.map(() => '<td>&nbsp;</td>').join('')}<td>&nbsp;</td>
+  </tr>`).join('');
   const totalCells = item.sizes.map((size) => `<th>${sizeTotals[size]}</th>`).join('');
 
   return `<!doctype html>
@@ -294,6 +298,7 @@ function buildPrintDocument(item: Item, entries: StockEntry[]) {
         tbody td.challan { text-align: left; }
         tbody td.total, tfoot th:last-child { font-weight: 700; }
         tfoot th { background: #dfe9f4; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .blank-row td { height: 8mm; }
         .empty { height: 32px; color: #63718a; font-style: italic; }
         .summary { margin-top: 10px; color: #173c70; font-size: 8.5pt; font-weight: 700; text-align: right; }
         .footer { margin-top: 18px; color: #788397; font-size: 7pt; text-align: center; }
@@ -318,7 +323,7 @@ function buildPrintDocument(item: Item, entries: StockEntry[]) {
         </section>
         <table>
           <thead><tr><th>Date</th><th>Challan<br />Number</th>${sizeHeaders}<th>Total</th></tr></thead>
-          <tbody>${entryRows}</tbody>
+          <tbody>${entryRows}${blankRows}</tbody>
           <tfoot><tr><th>Total</th><th>—</th>${totalCells}<th>${totalPieces}</th></tr></tfoot>
         </table>
         <div class="summary">Total pieces: ${totalPieces}</div>
@@ -399,7 +404,9 @@ function PrintPreview({ item, entries, onClose }: { item: Item; entries: StockEn
               {item.sizes.map((size) => <td key={size}>{entry.quantities[size] || 0}</td>)}
               <td><strong>{totalForEntry(entry)}</strong></td>
             </tr>)}
-            {entries.length === 0 && <tr><td colSpan={item.sizes.length + 3}>No stock entries recorded.</td></tr>}
+            {Array.from({ length: PRINT_BLANK_ROWS }, (_, index) => <tr className="print-blank-row" key={`blank-${index}`} aria-hidden="true">
+              <td>&nbsp;</td><td>&nbsp;</td>{item.sizes.map((size) => <td key={size}>&nbsp;</td>)}<td>&nbsp;</td>
+            </tr>)}
           </tbody>
           <tfoot>
             <tr>

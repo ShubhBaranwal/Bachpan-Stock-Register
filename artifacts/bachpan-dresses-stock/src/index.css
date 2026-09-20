@@ -172,5 +172,6 @@ button:disabled { cursor: not-allowed; opacity: .56; }
   .print-table th:nth-child(2), .print-table td:nth-child(2) { width: 15%; }
   .print-table th:last-child, .print-table td:last-child { width: 8%; }
   .print-table tfoot th { background: #e8eef5 !important; }
+  .print-blank-row td { height: 25px; }
   .print-total { break-inside: avoid; }
 }
